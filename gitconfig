@@ -1,0 +1,11 @@
+[user]
+	email = ciciq128@gmail.com
+	name = CiciQ
+[credential]
+	helper = cache --timeout=7200
+[color]
+	ui = true
+[init]
+	defaultBranch = main
+[alias]
+	graph = log --all --graph --decorate --oneline
