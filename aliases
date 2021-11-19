@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Easier navigation: .., ..., ...., .....
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+
+# Get External IP / Internet Speed
+alias myip='curl -s https://ipinfo.io/json | jq .'
+alias speedtest='curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python -'
