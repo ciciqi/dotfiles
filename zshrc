@@ -129,3 +129,50 @@ unset aliasconf
 # add tomcat servlet api
 export CLASSPATH=$CLASSPATH:/opt/tomcat/lib/servlet-api.jar
 
+# ----------------------------------------------
+# Vi mode settings
+# ----------------------------------------------
+
+# Bind keys to yank and paste with system clipboard
+bindkey -ar " "
+local mapleader=" "
+
+function x11-clip-wrap-widgets() {
+    local copy_or_paste=$1
+    eval "declare -A widgets="${2#*=}
+
+    for key in ${(k)widgets}; do
+        widget=${widgets[$key]}
+        if [[ $copy_or_paste == "copy" ]]; then
+            eval "
+            function $widget-xclip() {
+                zle $widget
+                xclip -in -selection clipboard <<<\$CUTBUFFER
+            }
+            "
+        else
+            eval "
+            function $widget-xclip() {
+                CUTBUFFER=\$(xclip -out -selection clipboard)
+                zle $widget
+            }
+            "
+        fi
+
+        zle -N $widget-xclip
+        bindkey -a "$key" $widget-xclip
+    done
+}
+
+declare -A copy_widgets=(
+    ["${mapleader}y"]=vi-yank
+    ["${mapleader}Y"]=vi-yank-whole-line
+    ["${mapleader}d"]=vi-delete 
+)
+declare -A paste_widgets=(
+    ["${mapleader}P"]=vi-put-before
+    ["${mapleader}p"]=vi-put-after
+)
+
+x11-clip-wrap-widgets copy "$(declare -p copy_widgets)"
+x11-clip-wrap-widgets paste "$(declare -p paste_widgets)"
