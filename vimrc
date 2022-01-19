@@ -68,6 +68,7 @@ set updatetime=100      " Some plugins require fast updatetime
 " set ttyfast             " Improve redrawing
 set cursorline          " highlight current line
 hi CursorLine term=bold ctermbg=0 cterm=bold
+set background=dark     " Fix vim color scheme change in tmux
 
 " Searching
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
