@@ -4,7 +4,7 @@ files="zshrc aliases tmux.conf vimrc gitconfig"
 
 for file in $files; do
     origin="$HOME/.$file"
-    [[ -r "$origin" ]] && [[ -f "$origin" ]] && mv "$origin" "$origin.old";
+    [[ -f "$origin" ]] && mv "$origin" "$origin.old";
     echo "move $origin to $origin.old"
 
     file="$(pwd)/$file"

@@ -28,9 +28,6 @@ fi
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# make prompt at the bottom of terminal window before load instant prompt
-printf '%.0s\n' {1..100}
-
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
 
@@ -119,15 +116,19 @@ aliasconf="$HOME/.aliases"
 [[ -r "$aliasconf" ]] && [[ -f "$aliasconf" ]] && source "$aliasconf"
 unset aliasconf
 
+precmd() {
+    echo
+}
+
 # added by Anaconda3 installer
-# export PATH="/home/ciciq/anaconda36/bin:$PATH"
+export PATH="/home/ciciq/anaconda36/bin:$PATH"
 # export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/
 
 # use tensorflow
 # export PATH='/home/ciciq/anaconda36/envs/tensorflow/bin:$PATH'
 
-# add tomcat servlet api
-export CLASSPATH=$CLASSPATH:/opt/tomcat/lib/servlet-api.jar
+# Make date to use English format
+export LC_TIME=en_US.UTF-8
 
 # ----------------------------------------------
 # Vi mode settings
@@ -164,6 +165,7 @@ function x11-clip-wrap-widgets() {
     done
 }
 
+# cmd 'bindkey -a' to show key bindings
 declare -A copy_widgets=(
     ["${mapleader}y"]=vi-yank
     ["${mapleader}Y"]=vi-yank-whole-line

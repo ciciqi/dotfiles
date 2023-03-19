@@ -1,5 +1,5 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set nocompatible " VI compatible mode is disabled so that VIm things work
+set nocompatible " VI compatible mode is disabled so that vim things work
 
 " =============================================================================
 "   PLUGINS
@@ -12,24 +12,53 @@ if empty(glob('~/.vim/autoload/plug.vim'))
     autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 
-call plug#begin('~/.vim/plugged')
-" display
-Plug 'vim-airline/vim-airline'
+" Build Universal Ctags
+function! BuildUCtags(info)
+    " info is a dictionary with 3 fields
+    " - name:   name of the plugin
+    " - status: 'installed', 'updated', or 'unchanged'
+    " - force:  set on PlugInstall! or PlugUpdate!
+    if a:info.status == 'installed' || a:info.force
+        !./autogen.sh
+        !./configure
+        !make
+        !sudo make install
+    endif
+endfunction
 
-" latex
+call plug#begin()
+" Statusline
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
+Plug 'edkolev/tmuxline.vim'
+
+" Latex
 Plug 'lervag/vimtex'
 
-" ide for c
-Plug 'valloric/youcompleteme' " install.py
-Plug 'universal-ctags/ctags' " follow docs/autotools.rst to make install
-Plug 'ludovicchabant/vim-gutentags'
-Plug 'scrooloose/nerdtree'
+" C/C++
+Plug 'octol/vim-cpp-enhanced-highlight'
+
+" Ctags
+Plug 'universal-ctags/ctags', { 'do': function('BuildUCtags') }
+" Plug 'ludovicchabant/vim-gutentags'
+" Plug 'skywind3000/gutentags_plus'
+
+" Completion
+Plug 'ycm-core/YouCompleteMe', { 'do': 'python3 install.py --clangd-completer' }
+
+" Linting
+Plug 'dense-analysis/ale'
+
+" Format
+Plug 'vim-autoformat/vim-autoformat'
+
+Plug 'preservim/nerdtree'
 Plug 'ctrlpvim/ctrlp.vim'
-Plug 'chiel92/vim-autoformat'
 Plug 'skywind3000/asyncrun.vim'
 
 " Movement
 Plug 'easymotion/vim-easymotion'
+Plug 'tpope/vim-unimpaired'
 call plug#end()
 
 " =============================================================================
@@ -98,25 +127,43 @@ nnoremap L $
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set autochdir
 " 'Q' in normal mode enters Ex mode. You almost never want this.
-nmap Q <Nop>        
+nmap Q <Nop>
 
 " File Encoding
 set fileencodings=utf-8,ucs-bom,utf-16,gbk,big5,gb18030,latin1
 
 " Auto close
-inoremap ( ()<Esc>i
-inoremap { {}<Esc>i
 inoremap {<CR> {<CR>}<Esc>O
-inoremap [ []<Esc>i
-" inoremap < <><Esc>i
-inoremap ' ''<Esc>i
-inoremap " ""<Esc>i
+inoremap {;<CR> {<CR>};<Esc>O
 
 " =============================================================================
 "   PLUGIN CONFIG
 " =============================================================================
 
+" Airline config
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let g:airline_powerline_fonts = 1
+let g:airline#extensions#tabline#enabled = 1
+let g:airline_skip_empty_sections = 1
+
+function! AirlineInit()
+  let g:airline_section_z = airline#section#create_right(['%P','%l/%L','%c'])
+endfunction
+autocmd VimEnter * call AirlineInit()
+
+let g:airline#extensions#tmuxline#enabled = 0
+let g:tmuxline_theme = 'powerline'
+let g:tmuxline_preset = {
+      \'a'    : '#S',
+      \'win'  : '#I #W',
+      \'cwin' : ['#I', '#W', '#F'],
+      \'options': {
+        \'status-justify': 'left'},
+      \'y'    : ['%R', '%a', '%F'],
+      \'z'    : '#H'}
+
 " Vimtex config
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:tex_flavor='latex'
 let g:vimtex_compiler_latexmk_engines={'_': '-xelatex'}
 let g:vimtex_view_method='zathura'
@@ -125,57 +172,88 @@ set conceallevel=1
 let g:tex_conceal='abdmg'
 
 " Gutentags config
-let g:gutentags_project_root=['.root', '.svn', '.git', '.hg', '.project']
-let g:gutentags_ctags_tagfile = '.tags'
-let s:vim_tags = expand('~/.cache/tags')
-let g:gutentags_cache_dir = s:vim_tags
-let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
-let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
-let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
-if !isdirectory(s:vim_tags)
-    silent! call mkdir(s:vim_tags, 'p')
-endif
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" " enable gtags module
+" " let g:gutentags_modules = ['ctags', 'gtags_cscope']
+"
+" " config project root markers
+" let g:gutentags_project_root=['.root', '.svn', '.git', '.hg', '.project']
+"
+" " generate datebases in my cache directory, prevent gtags files polluting my project
+" let g:gutentags_ctags_tagfile = '.tags'
+" let s:vim_tags = expand('~/.cache/tags')
+" let g:gutentags_cache_dir = s:vim_tags
+"
+" " config ctags arguments
+" let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+" let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
+" let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
+"
+" " change focus to quickfix window after search (optional).
+" " let g:gutentags_plus_switch = 1
+"
+" " create ~/.cache/tags if it doesn't exist
+" if !isdirectory(s:vim_tags)
+"     silent! call mkdir(s:vim_tags, 'p')
+" endif
 
-" YCM config
-let g:ycm_add_preview_to_completeopt = 0
+" Youcompleteme config
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set completeopt=menu,menuone
 let g:ycm_show_diagnostics_ui = 0
-let g:ycm_server_log_level = 'info'
 let g:ycm_min_num_identifier_candidate_chars = 2
 let g:ycm_collect_identifiers_from_comments_and_strings = 1
-let g:ycm_complete_in_strings=1
+let g:ycm_complete_in_strings = 1
 let g:ycm_key_invoke_completion = '<c-z>'
-set completeopt=menu,menuone
 noremap <c-z> <NOP>
+let g:ycm_confirm_extra_conf = 0
 let g:ycm_semantic_triggers =  {
             \ 'c,cpp,python,java,go,erlang,perl': ['re!\w{2}'],
             \ 'cs,lua,javascript': ['re!\w{2}'],
             \ }
 let g:ycm_filetype_whitelist = {
-            \ "c":1,
-            \ "cpp":1,
-            \ "h":1,
-            \ "py":1,
-            \ "sh":1,
-            \ "zsh":1,
+            \ "c": 1,
+            \ "cpp": 1,
+            \ "python": 1,
+            \ "vim": 1,
+            \ "sh": 1,
+            \ "zsh": 1,
+            \ "markdown": 1,
             \ }
+augroup MyYCMCustom
+    autocmd!
+    autocmd FileType c,cpp,python let b:ycm_hover = {
+                \ 'command': 'GetDoc',
+                \ 'syntax': &filetype
+                \ }
+augroup END
+
+" ALE config
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let g:ale_cpp_cc_options = '-std=c++17 -O2 -Wall'
+let g:ale_echo_msg_format = '[%linter%] %code: %%s'
 
 " Asyncrun config
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:asyncrun_open = 6
 let g:asyncrun_bell = 1
 let g:asyncrun_rootmarks = ['.svn', '.git', '.root', '_darcs', 'build.xml']
 nnoremap <F10> :call asyncrun#quickfix_toggle(6)<cr>
-nnoremap <silent> <F9> :AsyncRun g++ -Wall -O2 "$(VIM_FILEPATH)" -o "$(VIM_FILEDIR)/$(VIM_FILENOEXT)" <cr>
+nnoremap <silent> <F9> :w <cr> :AsyncRun g++ -std=c++17 -Wall -g -O0 -fsanitize=address -I /usr/local/boost_1_78_0 "$(VIM_FILEPATH)" -o "$(VIM_FILEDIR)/$(VIM_FILENOEXT)" <cr>
 nnoremap <silent> <F5> :AsyncRun -raw -cwd=$(VIM_FILEDIR) "$(VIM_FILEDIR)/$(VIM_FILENOEXT)" <cr>
 nnoremap <silent> <F7> :AsyncRun -cwd=<root> make <cr>
 nnoremap <silent> <F8> :AsyncRun -cwd=<root> -raw make run <cr>
 nnoremap <silent> <F6> :AsyncRun -cwd=<root> -raw make test <cr>
 nnoremap <silent> <F4> :AsyncRun -cwd=<root> cmake . <cr>
 
-" plugin autoformat config
+" Autoformat config
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 noremap <F3> :Autoformat<CR>
+nnoremap <leader>jd :YcmCompleter GoTo<CR>
+let g:ycm_auto_hover = ""
 
 " =============================================================================
-"   CUSTOM SHORTCUTS  (LEADER, FN, &c)
+"   CUSTOM SHORTCUTS
 " =============================================================================
 
 " ev sv  --  Vimrc
